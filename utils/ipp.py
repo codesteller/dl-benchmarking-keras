@@ -54,7 +54,7 @@ class Dataset:
             target_size=self.image_size,
             batch_size=self.batch_size,
             color_mode="rgb",
-            class_mode="categorical",
+            class_mode="sparse",
             shuffle=True,
             seed=42,
         )
@@ -64,7 +64,7 @@ class Dataset:
             target_size=self.image_size,
             batch_size=self.batch_size,
             color_mode="rgb",
-            class_mode="categorical",
+            class_mode="sparse",
             shuffle=True,
             seed=42,
         )

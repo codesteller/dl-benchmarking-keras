@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Profile files
+event_files/
+
+# Other files
+.vscode
+nsys*

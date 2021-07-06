@@ -1,0 +1,3 @@
+matplotlib
+pillow==8.2.0
+numpy

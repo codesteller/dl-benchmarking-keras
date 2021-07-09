@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras import layers
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
@@ -12,6 +13,8 @@ class Dataset:
         self.batch_size = batch_size
         self.seed = seed
         self.prefetch = prefetch
+        self.AUTOTUNE = tf.data.AUTOTUNE
+        self.augmentation = True
 
     def get_ds(self):
         train_ds = tf.keras.preprocessing.image_dataset_from_directory(
@@ -31,23 +34,59 @@ class Dataset:
             interpolation='bilinear',
         )
 
+        # do augmentation only for training dataset
+        if self.augmentation:
+            train_ds = self.do_augmentation_with_layers(train_ds)
+
         if self.prefetch > 0:
-            AUTOTUNE = tf.data.AUTOTUNE
-            train_ds = train_ds.cache().shuffle(self.prefetch).prefetch(buffer_size=AUTOTUNE)
-            valid_ds = valid_ds.cache().prefetch(buffer_size=AUTOTUNE)
+            train_ds = train_ds.cache().shuffle(
+                self.prefetch).prefetch(buffer_size=self.AUTOTUNE)
+            valid_ds = valid_ds.cache().prefetch(buffer_size=self.AUTOTUNE)
 
         return train_ds, valid_ds
+
+    def do_augmentation_with_layers(self, train_ds):
+
+        resize_and_rescale = tf.keras.Sequential([
+            layers.experimental.preprocessing.Resizing(
+                self.image_size[0], self.image_size[1]),
+            layers.experimental.preprocessing.Rescaling(1./255),
+        ])
+
+        # Resize and rescale all datasets
+        aug_train_data = train_ds.map(lambda x, y: (resize_and_rescale(x), y),
+                                      num_parallel_calls=self.AUTOTUNE)
+
+        return aug_train_data
+
+    def do_augmentation_with_tfimage(self, train_ds):
+
+        aug_ops = tf.keras.Sequential([
+            layers.experimental.preprocessing.Resizing(
+                self.image_size[0], self.image_size[1]),
+            layers.experimental.preprocessing.Rescaling(1./255),
+            layers.experimental.preprocessing.RandomFlip("horizontal",
+                                                         input_shape=(self.image_size[0], self.image_size[1], 3)),
+            layers.experimental.preprocessing.RandomRotation(0.1),
+            layers.experimental.preprocessing.RandomZoom(0.1),
+        ])
+
+        # Resize and rescale all datasets
+        aug_train_data = train_ds.map(lambda x, y: (aug_ops(x), y),
+                                      num_parallel_calls=self.AUTOTUNE)
+
+        return aug_train_data
 
     def get_generators(self):
         train_datagen = ImageDataGenerator(
             rescale=1.0 / 255,
-            rotation_range=40,
-            width_shift_range=0.2,
-            height_shift_range=0.2,
-            shear_range=0.2,
-            zoom_range=0.2,
-            horizontal_flip=True,
-            fill_mode="nearest",
+            # rotation_range=40,
+            # width_shift_range=0.2,
+            # height_shift_range=0.2,
+            # shear_range=0.2,
+            # zoom_range=0.2,
+            # horizontal_flip=True,
+            # fill_mode="nearest",
         )
 
         # Note that the validation data should not be augmented!

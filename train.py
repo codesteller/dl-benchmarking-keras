@@ -23,11 +23,11 @@ def train_with_tfdata(dbds, model_name, num_classes, epochs, train_corenet=False
         print("For '{}', parameter 'trainable' cannot be True. Changing iot to False".format(
             model_name))
 
-    normalization_layer = tf.keras.layers.experimental.preprocessing.Rescaling(
-        1./255)
-    normalized_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
-    image_batch, labels_batch = next(iter(normalized_ds))
-    first_image = image_batch[0]
+    # normalization_layer = tf.keras.layers.experimental.preprocessing.Rescaling(
+    #     1./255)
+    # normalized_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
+    # image_batch, labels_batch = next(iter(normalized_ds))
+    # first_image = image_batch[0]
 
     mymodel = Model(model_name, num_classes, train_corenet=train_corenet)
 
@@ -78,12 +78,16 @@ def main():
     train_dir = os.path.join(data_dir, "train")
     valid_dir = os.path.join(data_dir, "valid")
     image_size = (224, 224)
-    batch_size = 128
-    epochs = 10
+    batch_size = 256
+    epochs = 3
     num_classes = 2
     NUM_TRAIN = 20000
     NUM_VALID = 5000
-    model_name = "eff_b0"          # "eff_b0" or "test_model"
+
+    # Model name can be 
+    # "eff_b0", "eff_b1", "eff_b2", "eff_b3", 
+    # "eff_b4", "eff_b5", "eff_b6", "eff_b7", "test_model"
+    model_name = "eff_b6"          
     train_corenet = False
 
     data_api = "keras_gen"         # "tf_data" or "keras_gen"
@@ -94,7 +98,7 @@ def main():
                    batch_size,
                    NUM_TRAIN=20000,
                    NUM_VALID=5000,
-                   prefetch=500)
+                   prefetch=1000)
 
     if data_api == "tf_data":
         history = train_with_tfdata(

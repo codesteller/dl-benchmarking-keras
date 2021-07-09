@@ -12,11 +12,16 @@ from utils.ipp import Dataset
 from utils.model import Model
 
 
-def train_with_tfdata(dbds, model_name, num_classes, epochs):
+def train_with_tfdata(dbds, model_name, num_classes, epochs, train_corenet=False):
     # -----------------------------------------------------------
     #          TF Dataset
     # -----------------------------------------------------------
     train_ds, valid_ds = dbds.get_ds()
+
+    if model_name.lower() == "test_model" and train_corenet:
+        train_corenet = False
+        print("For '{}', parameter 'trainable' cannot be True. Changing iot to False".format(
+            model_name))
 
     normalization_layer = tf.keras.layers.experimental.preprocessing.Rescaling(
         1./255)
@@ -24,7 +29,7 @@ def train_with_tfdata(dbds, model_name, num_classes, epochs):
     image_batch, labels_batch = next(iter(normalized_ds))
     first_image = image_batch[0]
 
-    mymodel = Model(model_name, num_classes)
+    mymodel = Model(model_name, num_classes, train_corenet=train_corenet)
 
     history = mymodel.net.fit(
         train_ds,
@@ -35,7 +40,7 @@ def train_with_tfdata(dbds, model_name, num_classes, epochs):
     return history
 
 
-def train_with_generators(dbds, model_name, num_classes, epochs):
+def train_with_generators(dbds, model_name, num_classes, epochs, train_corenet=False):
     # -----------------------------------------------------------
     #           ImageDataGenerator
     # -----------------------------------------------------------
@@ -46,10 +51,15 @@ def train_with_generators(dbds, model_name, num_classes, epochs):
 
     print(STEP_SIZE_TRAIN, STEP_SIZE_VALID)
 
-    mymodel = Model(model_name, num_classes)
+    if model_name.lower() == "test_model" and train_corenet:
+        train_corenet = False
+        print("For '{}', parameter 'trainable' cannot be True. Changing iot to False".format(
+            model_name))
+
+    mymodel = Model(model_name, num_classes, train_corenet=train_corenet)
     train_net = mymodel.net
 
-    history = train_net.fit(generator=train_generator,
+    history = train_net.fit(train_generator,
                             steps_per_epoch=STEP_SIZE_TRAIN,
                             validation_data=valid_generator,
                             validation_steps=STEP_SIZE_VALID,
@@ -73,18 +83,22 @@ def main():
     num_classes = 2
     NUM_TRAIN = 20000
     NUM_VALID = 5000
-    model_name = "base"
+    model_name = "eff_b0"          # "eff_b0" or "test_model"
+    train_corenet = False
 
-    data_api = "tf_data"         # "tf_data" or "keras_gen"
+    data_api = "keras_gen"         # "tf_data" or "keras_gen"
 
     dbds = Dataset(train_dir,
                    valid_dir,
                    image_size,
                    batch_size,
+                   NUM_TRAIN=20000,
+                   NUM_VALID=5000,
                    prefetch=500)
 
     if data_api == "tf_data":
-        history = train_with_tfdata(dbds, model_name, num_classes, epochs)
+        history = train_with_tfdata(
+            dbds, model_name, num_classes, epochs, train_corenet)
     elif data_api == "keras_gen":
         history = train_with_generators(dbds, model_name, num_classes, epochs)
     else:

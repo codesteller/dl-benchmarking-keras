@@ -4,7 +4,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
 class Dataset:
-    def __init__(self, train_dir, valid_dir, image_size=(224, 224), batch_size=32, prefetch=500, seed=123):
+    def __init__(self, train_dir, valid_dir, image_size=(224, 224), batch_size=32, NUM_TRAIN=20000, NUM_VALID=5000, prefetch=500, seed=123):
         self.train_dir = train_dir
         self.valid_dir = valid_dir
         self.image_size = image_size
@@ -18,6 +18,8 @@ class Dataset:
             seed=self.seed,
             image_size=self.image_size,
             batch_size=self.batch_size,
+            shuffle=True,
+            interpolation='bilinear',
         )
 
         valid_ds = tf.keras.preprocessing.image_dataset_from_directory(
@@ -25,6 +27,7 @@ class Dataset:
             seed=self.seed,
             image_size=self.image_size,
             batch_size=self.batch_size,
+            interpolation='bilinear',
         )
 
         if self.prefetch > 0:
